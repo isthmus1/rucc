@@ -204,6 +204,7 @@ const fn integer(kind: IntKind) -> Option<&'static str> {
 const fn floating(kind: FloatKind) -> &'static str {
     match kind {
         FloatKind::Float16 => "_Float16",
+        FloatKind::BFloat16 => "__bf16",
         FloatKind::Float => "float",
         FloatKind::Float32 => "_Float32",
         FloatKind::Double => "double",

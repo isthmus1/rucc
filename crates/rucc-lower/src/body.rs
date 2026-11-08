@@ -3792,7 +3792,9 @@ impl<'u> Body<'_, 'u> {
                 self.discard(expr);
                 Vec::new()
             }
-            Pass::Direct => self.eval(expr).into_iter().collect(),
+            // A value however the expression came out, so that a return the signature says has a
+            // value always has one, even after something in it was reported.
+            Pass::Direct => vec![self.value(expr)],
             Pass::Pieces(_) => {
                 let ty = self.tast()[expr].ty;
                 let (addr, align) = match repr::value_type(self.types(), self.target(), ty) {
@@ -7058,7 +7060,15 @@ impl<'u> Body<'_, 'u> {
 
     /// Reads a place.
     fn read(&mut self, place: Place, span: Span) -> Option<Value> {
-        let ty = repr::value_type(self.types(), self.target(), place.ty)?;
+        let Some(ty) = repr::value_type(self.types(), self.target(), place.ty) else {
+            // An aggregate has no value and is read through its place by whoever asked. A
+            // floating type the IR has no format for, which is `__bf16` today, is a scalar that
+            // has to have one, so it is reported here rather than coming out as a missing value.
+            if repr::float_format_of(self.types(), self.target(), place.ty).is_some() {
+                self.unsupported("a value of this type", span);
+            }
+            return None;
+        };
         let ordered = self.atomic_access(place.ty);
         match place.at {
             Where::Var(var) => {
@@ -7785,6 +7795,12 @@ impl<'u> Body<'_, 'u> {
         let ty = self.tast()[expr].ty;
         match self.eval(expr) {
             Some(value) => value,
+            // A floating type the IR has no format for was reported where it was read or
+            // converted to, so it is not reported a second time here.
+            None if repr::float_format_of(self.types(), self.target(), ty).is_some() => {
+                let ty = repr::value_type(self.types(), self.target(), ty).unwrap_or(Type::PTR);
+                self.poison(ty, span)
+            }
             None => {
                 let ty = self.value_type(ty, span);
                 self.poison(ty, span)

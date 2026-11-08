@@ -1417,7 +1417,7 @@ impl Walk<'_> {
         let fits = match builtin {
             TypeName::Vector(..) => matches!(kind, TypeKind::Vector { .. }),
             TypeName::Poly(_) => matches!(kind, TypeKind::Int(_)),
-            TypeName::Sizeless | TypeName::Float128 => false,
+            TypeName::Sizeless | TypeName::Float128 | TypeName::BFloat16 => false,
         };
         fits.then_some(builtin)
     }
@@ -1468,7 +1468,7 @@ impl Walk<'_> {
     /// read it gets an entry for the scalars they are built from. pahole writes each into the
     /// kernel's BTF, so `__Poly8_t` and `__fp16` are there in a build with gcc. rucc's header is
     /// typedefs over the target's builtin vectors, and a unit that wrote one is taken to have
-    /// included it. `__bf16` is among them though it is not a type here yet.
+    /// included it. `__bf16` is among them on every target, as it is in gcc's.
     fn simd_scalars(&mut self) -> Vec<usize> {
         let over_vector = self.types.aliases().iter().any(|alias| {
             let Some((over, stood)) = alias.spelled else { return false };

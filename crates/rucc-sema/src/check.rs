@@ -475,6 +475,7 @@ impl<'a> Checker<'a> {
                     self.types.record(id)
                 }
                 TypeName::Float128 => self.types.float(FloatKind::Float128),
+                TypeName::BFloat16 => self.types.float(FloatKind::BFloat16),
                 TypeName::Poly(bits) => self.types.int(match bits {
                     8 => IntKind::UChar,
                     16 => IntKind::UShort,

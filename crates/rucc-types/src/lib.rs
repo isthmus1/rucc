@@ -330,6 +330,7 @@ mod tests {
             sizes(&linux()),
             [
                 (2, 2),
+                (2, 2),
                 (4, 4),
                 (4, 4),
                 (8, 8),
@@ -346,6 +347,7 @@ mod tests {
         assert_eq!(
             sizes(&target("aarch64-apple-darwin")),
             [
+                (2, 2),
                 (2, 2),
                 (4, 4),
                 (4, 4),
@@ -367,6 +369,7 @@ mod tests {
             sizes(&target("i686-linux-gnu")),
             [
                 (2, 2),
+                (2, 2),
                 (4, 4),
                 (4, 4),
                 (8, 4),
@@ -383,6 +386,7 @@ mod tests {
         assert_eq!(
             sizes(&target("i686-windows-gnu")),
             [
+                (2, 2),
                 (2, 2),
                 (4, 4),
                 (4, 4),
@@ -401,7 +405,7 @@ mod tests {
 
     #[test]
     fn every_floating_type_has_a_slot_of_its_own_and_a_name_of_its_own() {
-        // Twelve types and twelve ids, which is what makes `_Float64` and `double` two types that
+        // Thirteen types and thirteen ids, which is what makes `_Float64` and `double` two types that
         // `_Generic` can tell apart rather than one type with two spellings.
         let types = Types::new();
         let mut seen = Vec::new();
@@ -418,6 +422,7 @@ mod tests {
             names,
             [
                 "_Float16",
+                "__bf16",
                 "float",
                 "_Float32",
                 "double",

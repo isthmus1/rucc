@@ -11,6 +11,10 @@
 //! `__SIZEOF_FLOAT128__` is defined exactly where it is. wasm32 has it too, because clang has it
 //! there, and clang defines `__FLOAT128__` for it and not the size.
 //!
+//! x86 and AArch64 also have `__bf16`, the bfloat16 type. gcc's own `<immintrin.h>` declares the
+//! AVX-512 BF16 intrinsics with it, so a compiler without it cannot read that header on x86-64,
+//! and every header that includes it, SDL's among them, fails with it.
+//!
 //! They are names and not keywords, as they are in gcc, so a program may declare something of
 //! the same name and hide one, and on every other target they are ordinary identifiers.
 
@@ -76,6 +80,8 @@ pub enum TypeName {
     Sizeless,
     /// `_Float128`, under the name gcc had for it before the ISO one.
     Float128,
+    /// `__bf16`, the bfloat16 type.
+    BFloat16,
     /// A polynomial scalar of this many bits, which C reads as the unsigned integer of the same
     /// size and gcc's debug information describes as a base type of its own.
     Poly(u8),
@@ -130,17 +136,23 @@ const AARCH64: &[(&str, TypeName)] = &[
     ("__Poly16_t", TypeName::Poly(16)),
     ("__Poly64_t", TypeName::Poly(64)),
     ("__Poly128_t", TypeName::Poly(128)),
+    ("__bf16", TypeName::BFloat16),
 ];
 
 /// The name x86, PowerPC and wasm32 have for quad precision.
 const FLOAT128: &[(&str, TypeName)] = &[("__float128", TypeName::Float128)];
+
+/// x86's: quad precision's old name and bfloat16.
+const X86: &[(&str, TypeName)] =
+    &[("__float128", TypeName::Float128), ("__bf16", TypeName::BFloat16)];
 
 /// The names `arch` has before anything is read, and what each one is.
 #[must_use]
 pub(crate) fn type_names(arch: Arch) -> &'static [(&'static str, TypeName)] {
     match arch {
         Arch::Aarch64 => AARCH64,
-        Arch::X86_64 | Arch::X86 | Arch::PowerPc64 | Arch::Wasm32 => FLOAT128,
+        Arch::X86_64 | Arch::X86 => X86,
+        Arch::PowerPc64 | Arch::Wasm32 => FLOAT128,
         _ => &[],
     }
 }
@@ -176,5 +188,14 @@ mod tests {
         assert!(!has(Arch::Aarch64));
         assert!(!has(Arch::Riscv64));
         assert!(type_names(Arch::Arm).is_empty());
+    }
+
+    #[test]
+    fn bfloat16_has_its_name_where_gcc_has_it() {
+        let has = |arch| type_names(arch).iter().any(|&(name, _)| name == "__bf16");
+        assert!(has(Arch::X86_64));
+        assert!(has(Arch::X86));
+        assert!(has(Arch::Aarch64));
+        assert!(!has(Arch::PowerPc64));
     }
 }

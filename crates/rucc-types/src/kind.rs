@@ -280,6 +280,10 @@ impl IntKind {
 pub enum FloatKind {
     /// `_Float16`, always the binary16 format.
     Float16,
+    /// `__bf16`, the bfloat16 format: a `float` with its low sixteen bits dropped. gcc has it on
+    /// x86 and AArch64 as a predefined type name rather than a keyword, and it is an extended
+    /// type, so it is not the same type as anything else.
+    BFloat16,
     /// `float`, always the binary32 format.
     Float,
     /// `_Float32`, always the binary32 format, and not the same type as `float`.
@@ -315,8 +319,9 @@ impl FloatKind {
     /// Not in rank order, because there is no such order to put them in: which of `long double`
     /// and `_Float64x` is the wider one is a question about the target, and on Apple the answer
     /// is the second.
-    pub const ALL: [FloatKind; 12] = [
+    pub const ALL: [FloatKind; 13] = [
         FloatKind::Float16,
+        FloatKind::BFloat16,
         FloatKind::Float,
         FloatKind::Float32,
         FloatKind::Double,
@@ -345,6 +350,7 @@ impl FloatKind {
             FloatKind::Decimal32 => 9,
             FloatKind::Decimal64 => 10,
             FloatKind::Decimal128 => 11,
+            FloatKind::BFloat16 => 12,
         }
     }
 
@@ -372,6 +378,8 @@ impl FloatKind {
         match self {
             FloatKind::Float32x => 0,
             FloatKind::Float64x => 1,
+            // No other type has its format, so it only has to be distinct.
+            FloatKind::BFloat16 => 2,
             FloatKind::Float => 4,
             FloatKind::Double => 5,
             FloatKind::LongDouble => 6,
@@ -392,6 +400,7 @@ impl FloatKind {
     pub const fn as_str(self) -> &'static str {
         match self {
             FloatKind::Float16 => "_Float16",
+            FloatKind::BFloat16 => "__bf16",
             FloatKind::Float => "float",
             FloatKind::Float32 => "_Float32",
             FloatKind::Double => "double",

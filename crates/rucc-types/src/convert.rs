@@ -301,9 +301,11 @@ fn floating(types: &mut Types, left: TypeId, right: TypeId, target: &TargetInfo)
 /// There is no ordering on the kinds themselves to use here, because since C23 the answer
 /// depends on the target: `long double` outranks `_Float64x` on x86-64, where both of them are
 /// the x87 format, and loses to it on Apple, where `long double` is a `double`. So the question
-/// is asked of the format instead. Precision first and then range, which never disagree among
-/// the binary formats, and [`FloatKind::tie_break`] settles two types that are the same format,
-/// which is what makes `double + _Float64` a `_Float64`.
+/// is asked of the format instead. Precision first and then range, and [`FloatKind::tie_break`]
+/// settles two types that are the same format, which is what makes `double + _Float64` a
+/// `_Float64`. The two only disagree for `__bf16`, which has a `float`'s range and less precision
+/// than `_Float16`, and gcc 16 ranks it by precision as well: `__bf16 + _Float16` is a
+/// `_Float16` and `__bf16 + float` is a `float`.
 fn float_rank(kind: FloatKind, target: &TargetInfo) -> (u32, i32, u8) {
     let format = float_format(kind, target);
     (format.precision(), format.max_exponent(), kind.tie_break())

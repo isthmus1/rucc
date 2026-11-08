@@ -450,6 +450,10 @@ impl Checker<'_> {
         let target = self.cx.target;
         match kind {
             FloatKind::Float16 => target.has_float16,
+            // Where gcc has `__bf16` the target names it before any header.
+            FloatKind::BFloat16 => {
+                target.type_names().iter().any(|&(_, name)| name == rucc_target::TypeName::BFloat16)
+            }
             FloatKind::Float128 => target.has_float128,
             FloatKind::Float64x => target.float64x_format.is_some(),
             FloatKind::Decimal32 | FloatKind::Decimal64 | FloatKind::Decimal128 => {
